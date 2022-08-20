@@ -1,0 +1,29 @@
+% Your solution to Q2.1.5 goes here!
+
+%% Read the image and convert to grayscale, if necessary
+img = im2gray(imread('../data/cv_cover.jpg'));
+
+%% Compute the features and descriptors
+corners = detectFASTFeatures(img);
+[desc, locs] = computeBrief(img, corners.Location);
+
+counts = zeros(37, 1);
+for i = 0:36
+    %% Rotate image
+    r_img = imrotate(img, 10 * i);
+    
+    %% Compute features and descriptors
+    r_corners = detectFASTFeatures(r_img);
+    [r_desc, r_locs] = computeBrief(r_img, r_corners.Location);
+    
+    %% Match features
+    pairs = matchFeatures(desc, r_desc, 'MatchThreshold', 10.0, 'MaxRatio', 0.68);
+    
+    %% Update histogram
+    counts(i + 1) = size(pairs, 1);
+end
+
+%% Display histogram
+bar(counts);
+xticks(0:1:36)
+xticklabels({0:10:360});

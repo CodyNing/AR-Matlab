@@ -1,0 +1,11 @@
+n = 20;
+I1 = imread('../data/cv_cover.jpg');
+I2 = imread('../data/cv_desk.png');
+[locs1, locs2] = matchPics(I1, I2);
+H = computeH_norm(locs1, locs2);
+x = randi(size(I2, 2), n, 1);
+y = randi(size(I2, 1), n, 1);
+x2 = [x, y, ones(n, 1)];
+x1 = (H * x2')';
+x1l = x1(:, 1:2) ./ x1(:, 3);
+showMatchedFeatures(I2, I1, x2(:, 1:2), x1l, 'montage');

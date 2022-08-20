@@ -1,0 +1,46 @@
+% Q3.3.1
+
+cv_img = imread('../data/cv_cover.jpg');
+book_mov = loadVid('../data/book.mov');
+source_mov = loadVid('../data/ar_source.mov');
+
+result_mov = VideoWriter('../data/result', 'MPEG-4');
+close(result_mov);
+open(result_mov);
+
+nframes = min(size(book_mov, 2), size(source_mov, 2));
+
+[cv_h, cv_w] = size(cv_img);
+ratio = cv_w/cv_h;
+[s_h, s_w] = size(source_mov(1).cdata, 1:2);
+crop_w = uint32(s_h * 0.75 * ratio);
+crop_l = uint32((s_w - crop_w) / 2);
+
+for i = 1: nframes
+    book_img = book_mov(i).cdata;
+    source_img = source_mov(i).cdata;
+    % imwrite(book_img, '../data/book_1.png');
+
+    [locs1, locs2] = matchPics(cv_img, book_img);
+    
+    if size(locs1, 1) < 4
+        continue
+    end
+
+    %% Compute homography using RANSAC
+    [bestH2to1, ~] = computeH_ransac(locs1, locs2);
+
+    %% Scale harry potter image to template size
+    % crop
+    cropped_source_img = source_img(45:315, crop_l:(crop_l+crop_w), :);
+
+    scaled_source_img = imresize(cropped_source_img, [size(cv_img,1) size(cv_img,2)]);
+
+    %% Display composite image
+    frame = compositeH(bestH2to1, scaled_source_img, book_img);
+
+    writeVideo(result_mov, frame);
+    fprintf('%d/%d\n',i,nframes);
+end
+
+close(result_mov);
